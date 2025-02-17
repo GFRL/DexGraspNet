@@ -6,3 +6,4 @@ dataset
 
 # Caches
 __pycache__
+.vscode/*
