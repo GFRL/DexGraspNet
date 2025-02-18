@@ -1,3 +1,0 @@
-{
-    "python.analysis.exclude": ["**/assets", "**/output", "**/node_modules", "**/__pycache__", "**/build", ".git", "myenv/**","Test*","data/**"]
-}
