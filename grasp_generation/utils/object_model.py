@@ -30,7 +30,7 @@ class ObjectModel:
         self.object_verts_list = None
         self.object_faces_list = None
         self.object_face_verts_list = None
-        self.scale_choice = torch.tensor([0.06, 0.08, 0.1, 0.12, 0.15], dtype=torch.float, device=self.device)
+        self.scale_choice = torch.tensor([0.06, 0.08, 0.10, 0.12], dtype=torch.float, device=self.device)
 
     def initialize(self, object_code_list):
         if not isinstance(object_code_list, list):
@@ -44,8 +44,11 @@ class ObjectModel:
         self.surface_points_tensor = []
         self.object_scale_list = []
         for object_code in object_code_list:
-            self.object_scale_tensor.append(self.scale_choice[torch.randint(0, self.scale_choice.shape[0], (self.batch_size_each, ), device=self.device)])
-            self.object_mesh_list.append(tm.load(os.path.join(self.data_root_path, object_code, "coacd", "decomposed.obj"), force="mesh", process=False))
+            # 20 for each scale
+            per_scale_num = self.batch_size_each // self.scale_choice.shape[0]
+            self.object_scale_tensor.append(self.scale_choice.repeat(per_scale_num))
+            # self.object_scale_tensor.append(self.scale_choice[torch.randint(0, self.scale_choice.shape[0], (self.batch_size_each, ), device=self.device)])
+            self.object_mesh_list.append(tm.load(os.path.join(self.data_root_path, object_code, "mesh", "coacd.obj"), force="mesh", process=False))
             self.object_verts_list.append(torch.Tensor(self.object_mesh_list[-1].vertices).to(self.device))
             self.object_faces_list.append(torch.Tensor(self.object_mesh_list[-1].faces).long().to(self.device))
             self.object_face_verts_list.append(index_vertices_by_faces(self.object_verts_list[-1], self.object_faces_list[-1]))
