@@ -30,7 +30,7 @@ def main(gpu_id,obj_list):
 
 
 if __name__ == "__main__":
-    obj_list_path="../assets/DGNObj_splits/all.json"
+    obj_list_path="../assets/DGNObj_splits/icra_all.json"
     with open(obj_list_path,"r") as f:
         obj_list=json.load(f)
     
