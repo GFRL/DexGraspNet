@@ -2,8 +2,9 @@ from subprocess import call
 import multiprocessing as mp
 import os
 import json
+import numpy as np
 def call_cmd(obj_names,id,gpu_id):
-    cmd="python main.py  --Trail_id "+str(id)+" --gpu "+str(gpu_id)+ " --object_code_list "
+    cmd="python main.py  --Trail_id "+str(id)+" --gpu "+str(gpu_id)+ " --object_code "
     for obj_name in obj_names:
         cmd+=" "+obj_name
     print("Start!",cmd)
@@ -11,7 +12,7 @@ def call_cmd(obj_names,id,gpu_id):
     print("Done!",id)
     return ret
 
-def main(gpu_id,obj_list):
+def main(gpu_id,obj_name_list):
     save_path="../data/experiments/exp_33/results"
     real_obj_name_list=[]
     for obj_name in obj_name_list:
@@ -41,7 +42,7 @@ if __name__ == "__main__":
     gpu_id_list=[i//2 for i in range(gpu_id_num)]
     
     pool = mp.Pool(processes=gpu_id_num)
-    pool.map(main,zip(gpu_id_list,obj_list_list))
+    Res=[pool.apply_async(main, args=(gpu_id_list[i],obj_list_list[i])) for i in range(gpu_id_num)]
     pool.close()
     pool.join()
     

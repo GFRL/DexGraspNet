@@ -32,19 +32,18 @@ parser = argparse.ArgumentParser()
 # experiment settings
 parser.add_argument('--seed', default=1, type=int)
 parser.add_argument('--gpu', default="1", type=str)
-parser.add_argument('--object_code_list', default=
-    [
-         "core_bottle_13544f09512952bbc9273c10871e1c3d",
+parser.add_argument('--object_code', default=
+    "core_bottle_13544f09512952bbc9273c10871e1c3d",
             # "core_pillow_f3833476297f19c664b3b9b23ddfcbc",
             # "sem_Shampoo_2956aa89a775941267510767535a263a",
             # "sem_Camera_ebe5e14f4975e9029174750cc2a009c3",
             # "sem_Snowman_e57005090a392849320d4939a0975e7d",
             # "mujoco_AMBERLIGHT_UP_W",
-    ], type=list)
+    type=str)
 parser.add_argument('--name', default='exp_33', type=str)
 parser.add_argument('--n_contact', default=4, type=int)
 parser.add_argument('--batch_size', default=80, type=int)
-parser.add_argument('--n_iter', default=1000, type=int)
+parser.add_argument('--n_iter', default=6000, type=int)
 # hyper parameters
 parser.add_argument('--switch_possibility', default=0.5, type=float)
 parser.add_argument('--mu', default=0.98, type=float)
@@ -81,13 +80,12 @@ torch.manual_seed(args.seed)
 
 
 # prepare models
-
-total_batch_size = len(args.object_code_list) * args.batch_size
+object_code_list = [args.object_code]
+total_batch_size = len(object_code_list) * args.batch_size
 
 os.environ["CUDA_VISIBLE_DEVICES"] = args.gpu
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 print('running on', device)
-
 hand_model = HandModel(
     urdf_path='allegro_hand_description/allegro_hand_description_right.urdf',
     contact_points_path='allegro_hand_description/contact_points.json', 
@@ -101,7 +99,7 @@ object_model = ObjectModel(
     num_samples=2000, 
     device=device
 )
-object_model.initialize(args.object_code_list)
+object_model.initialize(object_code_list)
 
 initialize_convex_hull(hand_model, object_model, args)
 
@@ -121,17 +119,17 @@ optim_config = {
 }
 optimizer = Annealing(hand_model, **optim_config)
 
-try:
-    shutil.rmtree(os.path.join('../data/experiments', args.name, 'logs'))
-except FileNotFoundError:
-    pass
-os.makedirs(os.path.join('../data/experiments', args.name, 'logs'), exist_ok=True)
-logger_config = {
-    'thres_fc': args.thres_fc,
-    'thres_dis': args.thres_dis,
-    'thres_pen': args.thres_pen
-}
-logger = Logger(log_dir=os.path.join('../data/experiments', args.name, 'logs'), **logger_config)
+# try:
+#     shutil.rmtree(os.path.join('../data/experiments', args.name, 'logs'))
+# except FileNotFoundError:
+#     pass
+# os.makedirs(os.path.join('../data/experiments', args.name, 'logs'), exist_ok=True)
+# logger_config = {
+#     'thres_fc': args.thres_fc,
+#     'thres_dis': args.thres_dis,
+#     'thres_pen': args.thres_pen
+# }
+# logger = Logger(log_dir=os.path.join('../data/experiments', args.name, 'logs'), **logger_config)
 
 
 # optimize
@@ -145,7 +143,7 @@ weight_dict = dict(
 energy, E_fc, E_dis, E_pen, E_spen, E_joints = cal_energy(hand_model, object_model, verbose=True, **weight_dict)
 
 energy.sum().backward(retain_graph=True)
-logger.log(energy, E_fc, E_dis, E_pen, E_spen, E_joints, 0, show=False)
+# logger.log(energy, E_fc, E_dis, E_pen, E_spen, E_joints, 0, show=False)
 
 for step in tqdm(range(1, args.n_iter + 1), desc='optimizing'):
     s = optimizer.try_step()
@@ -165,7 +163,7 @@ for step in tqdm(range(1, args.n_iter + 1), desc='optimizing'):
         E_spen[accept] = new_E_spen[accept]
         E_joints[accept] = new_E_joints[accept]
 
-        logger.log(energy, E_fc, E_dis, E_pen, E_spen, E_joints, step, show=False)
+        # logger.log(energy, E_fc, E_dis, E_pen, E_spen, E_joints, step, show=False)
 
 
 # save results
@@ -184,7 +182,7 @@ joint_names = [
 os.makedirs(os.path.join('../data/experiments', args.name, 'results'), exist_ok=True)
 result_path = os.path.join('../data/experiments', args.name, 'results')
 os.makedirs(result_path, exist_ok=True)
-for i in range(len(args.object_code_list)):
+for i in range(len(object_code_list)):
     data_list = []
     for j in range(args.batch_size):
         idx = i * args.batch_size + j
@@ -200,11 +198,11 @@ for i in range(len(args.object_code_list)):
         save_dict = {
             "obj_scale": scale,
             "obj_pose": np.array([0, 0, 0, 1.0, 0, 0, 0]),
-            'obj_path': os.path.join("assets/DGNObj",args.object_code_list[i]),
+            'obj_path': os.path.join("assets/DGNObj",object_code_list[i]),
             "grasp_qpos": grasp_qpos,
             "grasp_error": energy[idx].item(),
         }
-        save_path_dir = os.path.join(result_path, args.object_code_list[i],f"scale{int(scale*100):03d}")
+        save_path_dir = os.path.join(result_path, object_code_list[i],f"scale{int(scale*100):03d}")
         os.makedirs(save_path_dir, exist_ok=True)
         save_path = os.path.join(save_path_dir, f"{len(os.listdir(save_path_dir))}.npy")
         np.save(save_path, save_dict, allow_pickle=True)
@@ -225,4 +223,4 @@ for i in range(len(args.object_code_list)):
         #     E_spen=E_spen[idx].item(),
         #     E_joints=E_joints[idx].item(),
         # ))
-    # np.save(os.path.join(result_path, args.object_code_list[i] + '.npy'), data_list, allow_pickle=True)
+    # np.save(os.path.join(result_path, object_code_list[i] + '.npy'), data_list, allow_pickle=True)
