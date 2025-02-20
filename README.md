@@ -10,8 +10,7 @@ swithch to the main branch and follow the instructions in the README.md file to 
 ## Generate the dataset
 
 1. Link the dataset to the assets folder
-ln -s ${YOUR_DATA_PATH} assets/DGNObj
-ln -s ${YOUR_SPLIT_PATH} assets/DGNObj_split
+ln -s ${YOUR_PATH}/MeshProcess/assets/object assets/object
 
 2. Generate the dataset
 ```

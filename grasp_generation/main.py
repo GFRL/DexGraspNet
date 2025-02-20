@@ -94,7 +94,7 @@ hand_model = HandModel(
 )
 
 object_model = ObjectModel(
-    data_root_path='../assets/DGNObj',
+    data_root_path='../assets/object/DGN_obj/processed_data',
     batch_size_each=args.batch_size,
     num_samples=2000, 
     device=device
@@ -198,7 +198,7 @@ for i in range(len(object_code_list)):
         save_dict = {
             "obj_scale": scale,
             "obj_pose": np.array([0, 0, 0, 1.0, 0, 0, 0]),
-            'obj_path': os.path.join("assets/DGNObj",object_code_list[i]),
+            'obj_path': os.path.join("assets/object/DGN_obj/processed_data",object_code_list[i]),
             "grasp_qpos": grasp_qpos,
             "grasp_error": energy[idx].item(),
         }
