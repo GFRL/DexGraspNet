@@ -7,12 +7,12 @@
 ## Environment
 swithch to the main branch and follow the instructions in the README.md file to install the required packages.
 
-## Generate the dataset
+## Generate the grasps
 
 1. Link the dataset to the assets folder
 ln -s ${YOUR_PATH}/MeshProcess/assets/object assets/object
 
-2. Generate the dataset
+2. Generate the grasps
 ```
 cd grasp_generation
 python main.py # generate grasps for single object
